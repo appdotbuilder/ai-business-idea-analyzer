@@ -27,14 +27,32 @@ class BusinessIdeaAnalysisService
         // Extract keywords to tailor analysis
         $keywords = $this->extractKeywords($description);
         
+        // Perform individual analyses
+        $marketDemand = $this->analyzeMarketDemand($description, $keywords);
+        $feasibility = $this->analyzeFeasibility($description, $keywords);
+        $profitability = $this->analyzeProfitability($description, $keywords);
+        $uniqueness = $this->analyzeUniqueness($description, $keywords);
+        $scalability = $this->analyzeScalability($description, $keywords);
+        $riskAssessment = $this->analyzeRiskAssessment($description, $keywords);
+        
+        // Generate score-based recommendations
+        $scores = [
+            'market_demand' => $marketDemand['score'],
+            'feasibility' => $feasibility['score'],
+            'profitability' => $profitability['score'],
+            'uniqueness' => $uniqueness['score'],
+            'scalability' => $scalability['score'],
+            'risk_assessment' => $riskAssessment['score'],
+        ];
+        
         return [
-            'market_demand' => $this->analyzeMarketDemand($description, $keywords),
-            'feasibility' => $this->analyzeFeasibility($description, $keywords),
-            'profitability' => $this->analyzeProfitability($description, $keywords),
-            'uniqueness' => $this->analyzeUniqueness($description, $keywords),
-            'scalability' => $this->analyzeScalability($description, $keywords),
-            'risk_assessment' => $this->analyzeRiskAssessment($description, $keywords),
-            'recommendations' => $this->generateRecommendations($description, $keywords),
+            'market_demand' => $marketDemand,
+            'feasibility' => $feasibility,
+            'profitability' => $profitability,
+            'uniqueness' => $uniqueness,
+            'scalability' => $scalability,
+            'risk_assessment' => $riskAssessment,
+            'recommendations' => $this->generateRecommendations($description, $keywords, $scores),
         ];
     }
 
@@ -252,35 +270,109 @@ class BusinessIdeaAnalysisService
     }
 
     /**
-     * Generate specific recommendations for the business idea.
+     * Generate specific recommendations for the business idea based on analysis scores.
      *
      * @param string $description Business idea description
      * @param array<string, bool> $keywords Extracted keywords
+     * @param array<string, int> $scores Analysis scores for each criterion
      * @return string[] List of actionable recommendations
      */
-    protected function generateRecommendations(string $description, array $keywords): array
+    protected function generateRecommendations(string $description, array $keywords, array $scores): array
     {
-        $recommendations = [
-            'Conduct detailed market research to validate demand',
-            'Create a minimum viable product (MVP) to test core assumptions',
-            'Develop a comprehensive business plan with financial projections',
-        ];
+        $recommendations = [];
         
+        // Score-based specific recommendations
+        if ($scores['market_demand'] < 5) {
+            $recommendations[] = 'Conduct extensive market research to identify target demographics and validate actual market demand for your solution';
+            $recommendations[] = 'Survey potential customers to understand their pain points and willingness to pay';
+            $recommendations[] = 'Analyze competitor products and identify gaps in the current market offerings';
+        } elseif ($scores['market_demand'] >= 8) {
+            $recommendations[] = 'Leverage the strong market demand by accelerating your go-to-market strategy';
+            $recommendations[] = 'Consider expanding to adjacent markets with similar demand patterns';
+        }
+        
+        if ($scores['feasibility'] < 5) {
+            $recommendations[] = 'Develop a detailed technical roadmap breaking down implementation into manageable phases';
+            $recommendations[] = 'Create a proof-of-concept to validate the most challenging technical assumptions';
+            $recommendations[] = 'Identify key technical partners or hire specialized talent to address feasibility gaps';
+        } elseif ($scores['feasibility'] >= 8) {
+            $recommendations[] = 'Fast-track development given the high feasibility - consider agile development methodologies';
+        }
+        
+        if ($scores['profitability'] < 5) {
+            $recommendations[] = 'Re-evaluate your revenue model and explore diverse pricing strategies (freemium, subscription, usage-based)';
+            $recommendations[] = 'Conduct detailed cost analysis to identify areas for optimization and margin improvement';
+            $recommendations[] = 'Consider strategic partnerships that could reduce costs or increase revenue potential';
+        } elseif ($scores['profitability'] >= 8) {
+            $recommendations[] = 'Maximize the strong profitability potential by optimizing your pricing strategy and cost structure';
+        }
+        
+        if ($scores['uniqueness'] < 5) {
+            $recommendations[] = 'Innovate on existing solutions by adding unique features or pivot to a more distinct value proposition';
+            $recommendations[] = 'Focus on superior execution and customer experience as differentiators';
+            $recommendations[] = 'Consider targeting a specific niche market where you can establish a unique position';
+        } elseif ($scores['uniqueness'] >= 8) {
+            $recommendations[] = 'Protect your unique advantages through patents, trade secrets, or first-mover advantage';
+            $recommendations[] = 'Build strong brand recognition around your innovative approach';
+        }
+        
+        if ($scores['scalability'] < 5) {
+            $recommendations[] = 'Design a scalable infrastructure and operational plan for future growth from day one';
+            $recommendations[] = 'Identify key bottlenecks that could limit scaling and develop solutions early';
+            $recommendations[] = 'Consider automation opportunities to reduce human dependency as you scale';
+        } elseif ($scores['scalability'] >= 8) {
+            $recommendations[] = 'Prepare for rapid scaling by building robust systems and processes that can handle growth';
+            $recommendations[] = 'Consider geographic expansion strategies to leverage your scalability advantages';
+        }
+        
+        if ($scores['risk_assessment'] > 7) {
+            $recommendations[] = 'Identify and actively mitigate key risks - consider starting with a smaller pilot program to reduce exposure';
+            $recommendations[] = 'Develop contingency plans for major risk scenarios (technical failures, market changes, competition)';
+            $recommendations[] = 'Consider diversifying your approach or building in flexibility to pivot if needed';
+        } elseif ($scores['risk_assessment'] <= 3) {
+            $recommendations[] = 'Take advantage of the low-risk profile by being more aggressive in your market entry strategy';
+        }
+        
+        // Add general foundational recommendations
+        $specificRecommendationCount = count($recommendations);
+        
+        if ($specificRecommendationCount > 0) {
+            $recommendations[] = 'Create a minimum viable product (MVP) to test and validate your improvements';
+        } else {
+            $recommendations[] = 'Create a minimum viable product (MVP) to test core assumptions with real users';
+            $recommendations[] = 'Develop a comprehensive business plan with detailed financial projections';
+        }
+        
+        // Add keyword-based contextual recommendations
         if ($keywords['is_tech']) {
-            $recommendations[] = 'Build a technical prototype to validate feasibility';
-            $recommendations[] = 'Consider patent protection for unique innovations';
+            if ($scores['feasibility'] < 6) {
+                $recommendations[] = 'Build a technical prototype focusing on the core functionality before adding advanced features';
+            }
+            if ($scores['uniqueness'] >= 7) {
+                $recommendations[] = 'Consider patent protection for your unique technical innovations';
+            }
         }
         
         if ($keywords['is_social']) {
-            $recommendations[] = 'Focus on building an initial community of engaged users';
-            $recommendations[] = 'Develop viral growth mechanisms';
+            if ($scores['market_demand'] >= 6) {
+                $recommendations[] = 'Focus on building an initial community of highly engaged users who can drive viral growth';
+                $recommendations[] = 'Develop network effects and viral growth mechanisms to leverage social dynamics';
+            }
+        }
+        
+        if ($keywords['is_service']) {
+            if ($scores['scalability'] < 6) {
+                $recommendations[] = 'Standardize your service delivery processes and create training materials for easier scaling';
+            }
         }
         
         if (strpos($description, 'subscription') !== false) {
-            $recommendations[] = 'Design strong customer retention and churn reduction strategies';
+            if ($scores['profitability'] >= 6) {
+                $recommendations[] = 'Design strong customer retention strategies and churn reduction programs to maximize lifetime value';
+            }
         }
         
-        return $recommendations;
+        return array_unique($recommendations);
     }
 
     /**
